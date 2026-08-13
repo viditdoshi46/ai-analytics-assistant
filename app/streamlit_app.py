@@ -280,13 +280,28 @@ if "pending" in st.session_state:
 
 # ------------------------------------------------------------ welcome / thread ----
 if not st.session_state.history:
-    # On the landing view, keep the page pinned to the top (Streamlit can
-    # otherwise restore/scroll to a lower element on load). Guarded to the
-    # empty-conversation state so it never fights the user after they ask.
-    components.html(
-        "<script>window.parent.scrollTo(0,0);"
-        "var m=window.parent.document.querySelector('section.main');"
-        "if(m){m.scrollTo(0,0);}</script>", height=0)
+    # On the landing view, keep the page pinned to the top. Streamlit's
+    # chat_input auto-focuses on load, and the browser scrolls it into view —
+    # which pushes the header off-screen. Counter it: stop scroll-restoration,
+    # blur the focused input, and reset the scroll container across a few ticks
+    # so we beat Streamlit's own focus timing. Guarded to the empty state so it
+    # never fights the user after they ask a question.
+    components.html("""
+    <script>
+    (function () {
+      const doc = window.parent.document, win = window.parent;
+      try { win.history.scrollRestoration = 'manual'; } catch (e) {}
+      function toTop() {
+        try { const a = doc.activeElement; if (a && a.blur) a.blur(); } catch (e) {}
+        const sels = ['[data-testid="stMain"]', 'section.main',
+                      '.stMainBlockContainer', '[data-testid="stAppViewContainer"]'];
+        sels.forEach(s => { const el = doc.querySelector(s); if (el) el.scrollTop = 0; });
+        try { win.scrollTo(0, 0); } catch (e) {}
+      }
+      [0, 60, 150, 300, 500, 800].forEach(t => setTimeout(toTop, t));
+    })();
+    </script>
+    """, height=0)
 
     kpis = run_sql(con, """
     SELECT ROUND(SUM(oi.quantity*oi.unit_price),0) AS revenue,
