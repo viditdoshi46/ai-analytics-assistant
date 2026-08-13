@@ -35,15 +35,16 @@ st.markdown("""
   /* compact product-style header (no big banner — this is a chat app) */
   .brand {display:flex; align-items:center; gap:12px; margin-bottom:2px;}
   .brand .logo {
-     width:42px; height:42px; border-radius:11px; flex:0 0 42px;
-     display:flex; align-items:center; justify-content:center; font-size:1.3rem;
+     width:46px; height:46px; border-radius:12px; flex:0 0 46px;
+     display:flex; align-items:center; justify-content:center;
+     font-size:1.6rem; line-height:1;
      background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%); color:#fff;}
-  .brand h1 {margin:0; font-size:1.35rem; font-weight:700; line-height:1.15;}
+  .brand h1 {margin:0; font-size:1.4rem; font-weight:700; line-height:1.15;}
   .brand .pill {font-size:.72rem; font-weight:600; padding:2px 9px; border-radius:999px;
      margin-left:auto; white-space:nowrap;}
   .pill-demo {background:#eef2ff; color:#4f46e5;}
   .pill-live {background:#dcfce7; color:#15803d;}
-  .subtitle {color:#64748b; font-size:.98rem; margin:6px 0 2px 3px;}
+  .subtitle {color:#94a3b8; font-size:.98rem; margin:8px 0 2px 3px;}
 
   /* the plain-English takeaway under each answer */
   .insight {background:#eef2ff; border-left:4px solid #6366f1;
