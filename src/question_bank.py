@@ -187,6 +187,98 @@ GROUP BY 1 ORDER BY repeat_rate_pct DESC""",
             f"{d['segment'].iloc[0]} customers repeat the most "
             f"({d['repeat_rate_pct'].iloc[0]:.0f}% place more than one order)."),
     },
+    {
+        "q": "Show me a sample of the data (recent orders)",
+        "chart": "table",
+        "sql": """
+SELECT o.order_id, o.order_date, o.status,
+       c.customer_name, c.state, c.segment
+FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id
+ORDER BY o.order_date DESC
+LIMIT 15""",
+        "summarize": lambda d: (
+            f"A live peek at the raw data: the {len(d)} most recent orders, "
+            "each joined to its customer. Use this to see what columns exist "
+            "before asking a deeper question."),
+    },
+    {
+        "q": "Which individual products generate the most revenue?",
+        "chart": "bar",
+        "sql": """
+SELECT p.product_name, p.category,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+JOIN orders o ON oi.order_id = o.order_id
+WHERE o.status = 'Completed'
+GROUP BY 1, 2 ORDER BY revenue DESC LIMIT 10""",
+        "summarize": lambda d: (
+            f"{d['product_name'].iloc[0]} ({d['category'].iloc[0]}) is the "
+            f"single biggest revenue product at {_money(d['revenue'].iloc[0])}."),
+    },
+    {
+        "q": "How many orders does each customer segment place?",
+        "chart": "bar",
+        "sql": """
+SELECT c.segment, COUNT(DISTINCT o.order_id) AS orders
+FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id
+WHERE o.status = 'Completed'
+GROUP BY 1 ORDER BY orders DESC""",
+        "summarize": lambda d: (
+            f"{d['segment'].iloc[0]} places the most orders "
+            f"({int(d['orders'].iloc[0]):,}), ahead of {d['segment'].iloc[-1]} "
+            f"({int(d['orders'].iloc[-1]):,})."),
+    },
+    {
+        "q": "What are the top 5 cities by revenue?",
+        "chart": "bar",
+        "sql": """
+SELECT c.city, c.state,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+FROM order_items oi
+JOIN orders o ON oi.order_id = o.order_id
+JOIN customers c ON o.customer_id = c.customer_id
+WHERE o.status = 'Completed'
+GROUP BY 1, 2 ORDER BY revenue DESC LIMIT 5""",
+        "summarize": lambda d: (
+            f"{d['city'].iloc[0]} ({d['state'].iloc[0]}) is the top city at "
+            f"{_money(d['revenue'].iloc[0])}."),
+    },
+    {
+        "q": "What is the average order value by month?",
+        "chart": "line",
+        "sql": """
+WITH order_rev AS (
+  SELECT o.order_id, o.order_date,
+         SUM(oi.quantity * oi.unit_price) AS rev
+  FROM order_items oi JOIN orders o ON oi.order_id = o.order_id
+  WHERE o.status = 'Completed'
+  GROUP BY 1, 2)
+SELECT DATE_TRUNC('month', order_date) AS month,
+       ROUND(AVG(rev), 2) AS avg_order_value
+FROM order_rev GROUP BY 1 ORDER BY 1""",
+        "summarize": lambda d: (
+            f"Average order value runs around {_money(d['avg_order_value'].mean())} "
+            "per month and is fairly stable over time."),
+    },
+    {
+        "q": "What percent of orders contain more than one product?",
+        "chart": "table",
+        "sql": """
+WITH lines AS (
+  SELECT o.order_id, COUNT(*) AS n_items
+  FROM order_items oi JOIN orders o ON oi.order_id = o.order_id
+  WHERE o.status = 'Completed'
+  GROUP BY 1)
+SELECT ROUND(100.0*AVG(CASE WHEN n_items > 1 THEN 1 ELSE 0 END), 1) AS multi_item_pct,
+       COUNT(*) AS orders
+FROM lines""",
+        "summarize": lambda d: (
+            f"{d['multi_item_pct'].iloc[0]:.0f}% of orders contain more than one "
+            "product — a signal of basket size and cross-sell."),
+    },
 ]
 
 

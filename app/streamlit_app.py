@@ -131,7 +131,7 @@ ask = st.button("Ask", type="primary")
 
 
 def pick_chart(df: pd.DataFrame, chart: str):
-    if df.shape[1] < 2 or len(df) < 2:
+    if chart == "table" or df.shape[1] < 2 or len(df) < 2:
         return None
     x = df.columns[0]
     ycands = [c for c in df.columns[1:] if pd.api.types.is_numeric_dtype(df[c])]
