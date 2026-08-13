@@ -35,11 +35,10 @@ st.markdown("""
   .hero h1 {color:#fff; margin:0; font-size:1.85rem; font-weight:700;}
   .hero p {color:#d7f5ef; margin:6px 0 0 0; font-size:1.02rem;}
   .hero .by {color:#a9e4da; font-size:0.9rem; margin-top:10px;}
-  div[data-testid="stMetric"] {background:#f2fbf9; border:1px solid #d9f0eb;
+  /* subtle card only — no background/text overrides, so labels + values
+     stay readable in BOTH light and dark themes */
+  div[data-testid="stMetric"] {border:1px solid rgba(20,184,166,.30);
       border-radius:12px; padding:14px 16px;}
-  div[data-testid="stMetricValue"] {color:#0b6b5b !important; font-weight:700;}
-  div[data-testid="stMetricLabel"], div[data-testid="stMetricLabel"] p {
-      color:#334155 !important; font-weight:600;}
   .insight {background:#f2fbf9; border-left:4px solid #14b8a6;
             padding:14px 16px; border-radius:8px; font-size:1.05rem;}
 </style>
