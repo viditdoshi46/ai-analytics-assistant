@@ -37,8 +37,8 @@ st.markdown("""
   .brand .logo {
      width:46px; height:46px; border-radius:12px; flex:0 0 46px;
      display:flex; align-items:center; justify-content:center;
-     font-size:1.6rem; line-height:1;
-     background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%); color:#fff;}
+     background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);}
+  .brand .logo svg {display:block;}
   .brand h1 {margin:0; font-size:1.4rem; font-weight:700; line-height:1.15;}
   .brand .pill {font-size:.72rem; font-weight:600; padding:2px 9px; border-radius:999px;
      margin-left:auto; white-space:nowrap;}
@@ -47,7 +47,8 @@ st.markdown("""
   .subtitle {color:#94a3b8; font-size:.98rem; margin:8px 0 2px 3px;}
 
   /* the plain-English takeaway under each answer */
-  .insight {background:#eef2ff; border-left:4px solid #6366f1;
+  /* fixed light bg + fixed dark text so it's readable in BOTH themes */
+  .insight {background:#eef2ff; border-left:4px solid #6366f1; color:#1e1b4b;
             padding:12px 15px; border-radius:8px; font-size:1.02rem; margin-top:6px;}
 
   /* welcome mini-stats */
@@ -128,9 +129,19 @@ if "history" not in st.session_state:
 # ------------------------------------------------------------------ header ----
 _pill = ('<span class="pill pill-live">● Live LLM</span>' if mode_llm
          else '<span class="pill pill-demo">● Demo mode</span>')
+_LOGO_SVG = (
+    '<svg width="26" height="26" viewBox="0 0 24 24" '
+    'xmlns="http://www.w3.org/2000/svg">'
+    '<path d="M3.5 5.5A2 2 0 0 1 5.5 3.5h13A2 2 0 0 1 20.5 5.5v8'
+    'A2 2 0 0 1 18.5 15.5H10l-4.2 3.8V15.5H5.5A2 2 0 0 1 3.5 13.5z" '
+    'fill="none" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/>'
+    '<rect x="7.3" y="10.2" width="2.1" height="3.2" rx="0.5" fill="#fff"/>'
+    '<rect x="10.9" y="7.8" width="2.1" height="5.6" rx="0.5" fill="#fff"/>'
+    '<rect x="14.5" y="9.2" width="2.1" height="4.2" rx="0.5" fill="#fff"/>'
+    '</svg>')
 st.markdown(f"""
 <div class="brand">
-  <div class="logo">💬</div>
+  <div class="logo">{_LOGO_SVG}</div>
   <h1>Ask-Your-Data</h1>
   {_pill}
 </div>
@@ -153,10 +164,12 @@ def pick_chart(df: pd.DataFrame, chart: str):
                       color_discrete_sequence=["#6366f1"])
     else:
         d = df.sort_values(y)
-        fig = px.bar(d, x=y, y=x, orientation="h",
-                     color=y, color_continuous_scale="Purples")
+        fig = px.bar(d, x=y, y=x, orientation="h")
+        # solid indigo fill — a continuous scale fades to white on close
+        # values and vanishes on a dark background
+        fig.update_traces(marker_color="#6366f1")
     fig.update_layout(height=380, margin=dict(l=10, r=10, t=20, b=10),
-                      coloraxis_showscale=False, hoverlabel=HOVER)
+                      hoverlabel=HOVER)
     return fig
 
 
