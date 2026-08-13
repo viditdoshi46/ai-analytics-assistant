@@ -108,7 +108,9 @@ c1, c2, c3, c4 = st.columns(4)
 c1.metric("Completed revenue", f"${kpis['revenue']:,.0f}")
 c2.metric("Orders", f"{int(kpis['orders']):,}")
 c3.metric("Customers", f"{int(kpis['customers']):,}")
-c4.metric("Mode", "Live LLM" if mode_llm else "Demo (curated)")
+c4.metric("Mode", "Live LLM" if mode_llm else "Demo",
+          help="Demo = curated questions run with no API key. "
+               "Live LLM = your key is set, so any question can be asked.")
 
 st.markdown("#### Try a question")
 cols = st.columns(2)
@@ -153,7 +155,7 @@ def answer(question, sql, chart, summarize_fn, source, creds=None):
     except Exception as exc:
         st.error(f"Could not run that safely: {exc}")
         return
-    with st.expander("🔎  SQL this ran"):
+    with st.expander("🔎  SQL that ran"):
         st.code(sql.strip(), language="sql")
     fig = pick_chart(df, chart)
     if fig is not None:
