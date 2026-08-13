@@ -1,0 +1,43 @@
+product_id,product_name,category,unit_price
+1,Electronics Item 1,Electronics,638.92
+2,Electronics Item 2,Electronics,748.46
+3,Electronics Item 3,Electronics,861.48
+4,Electronics Item 4,Electronics,788.08
+5,Electronics Item 5,Electronics,86.5
+6,Electronics Item 6,Electronics,633.95
+7,Electronics Item 7,Electronics,541.77
+8,Home Item 1,Home & Kitchen,126.76
+9,Home Item 2,Home & Kitchen,51.5
+10,Home Item 3,Home & Kitchen,60.47
+11,Home Item 4,Home & Kitchen,237.88
+12,Home Item 5,Home & Kitchen,109.87
+13,Home Item 6,Home & Kitchen,197.7
+14,Home Item 7,Home & Kitchen,182.13
+15,Office Item 1,Office Supplies,88.12
+16,Office Item 2,Office Supplies,86.56
+17,Office Item 3,Office Supplies,48.81
+18,Office Item 4,Office Supplies,22.24
+19,Office Item 5,Office Supplies,63.67
+20,Office Item 6,Office Supplies,34.7
+21,Office Item 7,Office Supplies,90.7
+22,Apparel Item 1,Apparel,90.92
+23,Apparel Item 2,Apparel,93.93
+24,Apparel Item 3,Apparel,114.31
+25,Apparel Item 4,Apparel,111.76
+26,Apparel Item 5,Apparel,79.35
+27,Apparel Item 6,Apparel,125.44
+28,Apparel Item 7,Apparel,118.85
+29,Sports Item 1,Sports & Outdoors,319.81
+30,Sports Item 2,Sports & Outdoors,55.54
+31,Sports Item 3,Sports & Outdoors,318.5
+32,Sports Item 4,Sports & Outdoors,231.97
+33,Sports Item 5,Sports & Outdoors,197.85
+34,Sports Item 6,Sports & Outdoors,312.47
+35,Sports Item 7,Sports & Outdoors,354.07
+36,Beauty Item 1,Beauty,75.23
+37,Beauty Item 2,Beauty,12.24
+38,Beauty Item 3,Beauty,80.2
+39,Beauty Item 4,Beauty,22.13
+40,Beauty Item 5,Beauty,53.18
+41,Beauty Item 6,Beauty,83.39
+42,Beauty Item 7,Beauty,25.56
