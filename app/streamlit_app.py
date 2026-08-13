@@ -19,6 +19,7 @@ sys.path.insert(0, str(ROOT / "src"))
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+import streamlit.components.v1 as components
 
 from db import get_con, run_sql, SCHEMA
 from question_bank import BANK
@@ -30,15 +31,16 @@ st.set_page_config(page_title="Ask-Your-Data | Vidit Doshi",
 # ---------------------------------------------------------------- styling ----
 st.markdown("""
 <style>
-  .block-container {max-width: 820px; padding-top: 1.6rem; padding-bottom: 6rem;}
+  /* generous top padding so nothing sits under Streamlit's fixed top toolbar */
+  .block-container {max-width: 820px; padding-top: 4.5rem; padding-bottom: 6rem;}
 
   /* compact product-style header (no big banner — this is a chat app) */
   .brand {display:flex; align-items:center; gap:12px; margin-bottom:2px;}
+  .brand img.logo {width:44px; height:44px; border-radius:12px; display:block;
+     flex:0 0 44px;}
   .brand h1 {margin:0; font-size:1.4rem; font-weight:700; line-height:1.15;}
   .brand .pill {font-size:.72rem; font-weight:600; padding:2px 9px; border-radius:999px;
      margin-left:auto; white-space:nowrap;}
-  /* keep the native logo image tight to the title */
-  div[data-testid="stImage"] {margin:0;}
   .pill-demo {background:#eef2ff; color:#4f46e5;}
   .pill-live {background:#dcfce7; color:#15803d;}
   .subtitle {color:#94a3b8; font-size:.98rem; margin:8px 0 2px 3px;}
@@ -126,19 +128,36 @@ if "history" not in st.session_state:
 # ------------------------------------------------------------------ header ----
 _pill = ('<span class="pill pill-live">● Live LLM</span>' if mode_llm
          else '<span class="pill pill-demo">● Demo mode</span>')
-# Native st.image logo — cannot be clipped or stripped by the HTML sanitizer.
-_LOGO = ROOT / "app" / "assets" / "logo.png"
-_lc, _tc = st.columns([1, 11], vertical_alignment="center")
-with _lc:
-    if _LOGO.exists():
-        st.image(str(_LOGO), width=46)
-with _tc:
-    st.markdown(f'<div class="brand"><h1>Ask-Your-Data</h1>{_pill}</div>',
-                unsafe_allow_html=True)
-st.markdown(
-    '<div class="subtitle">A natural-language analytics assistant — ask about '
-    'the sales data in plain English and get SQL, a chart, and the takeaway.</div>',
-    unsafe_allow_html=True)
+# Logo: an inline data-URI <img> in one markdown call. It loads instantly (no
+# network/reflow, so it doesn't trigger a scroll jump) and <img> is allowed by
+# Streamlit's HTML sanitizer. Generous top padding keeps it clear of the toolbar.
+import base64
+_LOGO_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" '
+    'viewBox="0 0 46 46">'
+    '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
+    '<stop offset="0" stop-color="#4f46e5"/>'
+    '<stop offset="1" stop-color="#7c3aed"/></linearGradient></defs>'
+    '<rect width="46" height="46" rx="12" fill="url(#g)"/>'
+    '<g transform="translate(11,11)">'
+    '<path d="M3.5 5.5A2 2 0 0 1 5.5 3.5h13A2 2 0 0 1 20.5 5.5v8'
+    'A2 2 0 0 1 18.5 15.5H10l-4.2 3.8V15.5H5.5A2 2 0 0 1 3.5 13.5z" '
+    'fill="none" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/>'
+    '<rect x="7.3" y="10.2" width="2.1" height="3.2" rx="0.5" fill="#fff"/>'
+    '<rect x="10.9" y="7.8" width="2.1" height="5.6" rx="0.5" fill="#fff"/>'
+    '<rect x="14.5" y="9.2" width="2.1" height="4.2" rx="0.5" fill="#fff"/>'
+    '</g></svg>')
+_LOGO_URI = ("data:image/svg+xml;base64,"
+             + base64.b64encode(_LOGO_SVG.encode()).decode())
+st.markdown(f"""
+<div class="brand">
+  <img class="logo" src="{_LOGO_URI}" alt="Ask-Your-Data logo">
+  <h1>Ask-Your-Data</h1>
+  {_pill}
+</div>
+<div class="subtitle">A natural-language analytics assistant — ask about the
+sales data in plain English and get SQL, a chart, and the takeaway.</div>
+""", unsafe_allow_html=True)
 
 
 # ----------------------------------------------------------------- helpers ----
@@ -261,6 +280,14 @@ if "pending" in st.session_state:
 
 # ------------------------------------------------------------ welcome / thread ----
 if not st.session_state.history:
+    # On the landing view, keep the page pinned to the top (Streamlit can
+    # otherwise restore/scroll to a lower element on load). Guarded to the
+    # empty-conversation state so it never fights the user after they ask.
+    components.html(
+        "<script>window.parent.scrollTo(0,0);"
+        "var m=window.parent.document.querySelector('section.main');"
+        "if(m){m.scrollTo(0,0);}</script>", height=0)
+
     kpis = run_sql(con, """
     SELECT ROUND(SUM(oi.quantity*oi.unit_price),0) AS revenue,
            COUNT(DISTINCT o.order_id) AS orders,
