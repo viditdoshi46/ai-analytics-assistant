@@ -98,38 +98,7 @@ The model only ever sees the schema, never the raw data.
 The engineering that matters is the data model, the SQL, and the governance.*
 """)
 
-# ---------------- KPIs ----------------
-kpis = run_sql(con, """
-SELECT ROUND(SUM(oi.quantity*oi.unit_price),0) AS revenue,
-       COUNT(DISTINCT o.order_id) AS orders,
-       COUNT(DISTINCT o.customer_id) AS customers
-FROM order_items oi JOIN orders o ON oi.order_id=o.order_id
-WHERE o.status='Completed'""").iloc[0]
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("Completed revenue", f"${kpis['revenue']:,.0f}")
-c2.metric("Orders", f"{int(kpis['orders']):,}")
-c3.metric("Customers", f"{int(kpis['customers']):,}")
-c4.metric("Mode", "Live LLM" if mode_llm else "Demo",
-          help="Demo = curated questions run with no API key. "
-               "Live LLM = your key is set, so any question can be asked.")
-
-st.markdown("#### Try a question")
-cols = st.columns(2)
-for i, item in enumerate(BANK):
-    if cols[i % 2].button(item["q"], key=f"chip{i}", use_container_width=True):
-        st.session_state["sel"] = i
-        st.session_state["typed"] = ""
-
-typed = st.text_input(
-    "…or ask your own question",
-    key="typed",
-    placeholder=("e.g., Which category grew fastest last year?"
-                 if mode_llm else
-                 "Free-form questions need an API key — see the sidebar. "
-                 "Meanwhile, tap a suggested question above."))
-ask = st.button("Ask", type="primary")
-
-
+# ---------------- helpers ----------------
 def pick_chart(df: pd.DataFrame, chart: str):
     if chart == "table" or df.shape[1] < 2 or len(df) < 2:
         return None
@@ -149,32 +118,6 @@ def pick_chart(df: pd.DataFrame, chart: str):
     return fig
 
 
-def answer(question, sql, chart, summarize_fn, source, creds=None):
-    st.markdown(f"#### {question}")
-    try:
-        df = run_sql(con, sql)
-    except Exception as exc:
-        st.error(f"Could not run that safely: {exc}")
-        return
-    with st.expander("🔎  SQL that ran"):
-        st.code(sql.strip(), language="sql")
-    fig = pick_chart(df, chart)
-    if fig is not None:
-        st.plotly_chart(fig, use_container_width=True)
-    st.dataframe(df, hide_index=True, use_container_width=True)
-    # insight
-    try:
-        if summarize_fn is not None:
-            text = summarize_fn(df)
-        else:
-            text = llm.summarize(question, df, creds=creds)
-    except Exception:
-        text = _generic_summary(df)
-    st.markdown(f'<div class="insight">💡 {text}</div>', unsafe_allow_html=True)
-    st.caption("Demo answer from the curated question set."
-               if source == "demo" else "Answer generated live by the language model.")
-
-
 def _generic_summary(df: pd.DataFrame) -> str:
     num = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
     if not num or len(df) == 0:
@@ -185,7 +128,33 @@ def _generic_summary(df: pd.DataFrame) -> str:
     return f"Top result: {label} at {top[y]:,.0f} ({y})."
 
 
-# ---------------- routing ----------------
+def answer(question, sql, chart, summarize_fn, source, creds=None):
+    st.markdown(f"#### {question}")
+    try:
+        df = run_sql(con, sql)
+    except Exception as exc:
+        st.error(f"Could not run that safely: {exc}")
+        return
+    with st.expander("🔎  SQL that ran"):
+        st.code(sql.strip(), language="sql")
+    if len(df) == 0:
+        st.warning("That query returned no rows — try a different question or "
+                   "widen the time range.")
+        return
+    fig = pick_chart(df, chart)
+    if fig is not None:
+        st.plotly_chart(fig, use_container_width=True)
+    st.dataframe(df, hide_index=True, use_container_width=True)
+    try:
+        text = summarize_fn(df) if summarize_fn is not None \
+            else llm.summarize(question, df, creds=creds)
+    except Exception:
+        text = _generic_summary(df)
+    st.markdown(f'<div class="insight">💡 {text}</div>', unsafe_allow_html=True)
+    st.caption("Demo answer from the curated question set."
+               if source == "demo" else "Answer generated live by the language model.")
+
+
 def find_bank(q: str):
     ql = q.lower().strip()
     for item in BANK:
@@ -194,28 +163,78 @@ def find_bank(q: str):
     return None
 
 
-if ask and typed:
-    if mode_llm:
-        with st.spinner("Thinking…"):
-            try:
-                sql = llm.nl_to_sql(typed, creds=user_creds)
-                answer(typed, sql, "bar", None, "llm", creds=user_creds)
-            except Exception as exc:
-                st.error(f"Could not answer that: {exc}")
-    else:
-        m = find_bank(typed)
-        if m:
-            answer(m["q"], m["sql"], m["chart"], m["summarize"], "demo")
+tab_ask, tab_data = st.tabs(["💬  Ask the data", "🗂️  Dataset"])
+
+# ================= ASK TAB =================
+with tab_ask:
+    kpis = run_sql(con, """
+    SELECT ROUND(SUM(oi.quantity*oi.unit_price),0) AS revenue,
+           COUNT(DISTINCT o.order_id) AS orders,
+           COUNT(DISTINCT o.customer_id) AS customers
+    FROM order_items oi JOIN orders o ON oi.order_id=o.order_id
+    WHERE o.status='Completed'""").iloc[0]
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Completed revenue", f"${kpis['revenue']:,.0f}")
+    c2.metric("Orders", f"{int(kpis['orders']):,}")
+    c3.metric("Customers", f"{int(kpis['customers']):,}")
+    c4.metric("Mode", "Live LLM" if mode_llm else "Demo",
+              help="Demo = curated questions run with no API key. "
+                   "Live LLM = your key is set, so any question can be asked.")
+
+    st.caption(f"{len(BANK)} suggested questions run instantly with no API key. "
+               "New to the data? Open the **Dataset** tab first.")
+    cols = st.columns(2)
+    for i, item in enumerate(BANK):
+        if cols[i % 2].button(item["q"], key=f"chip{i}", use_container_width=True):
+            st.session_state["sel"] = i
+            st.session_state["typed"] = ""
+
+    typed = st.text_input(
+        "…or ask your own question",
+        key="typed",
+        placeholder=("e.g., Which category grew the most in the last 12 months?"
+                     if mode_llm else
+                     "Free-form questions need an API key — see the sidebar. "
+                     "Meanwhile, tap a suggested question above."))
+    ask = st.button("Ask", type="primary")
+
+    if ask and typed:
+        if mode_llm:
+            with st.spinner("Thinking…"):
+                try:
+                    sql = llm.nl_to_sql(typed, creds=user_creds)
+                    answer(typed, sql, "bar", None, "llm", creds=user_creds)
+                except Exception as exc:
+                    st.error(f"Could not answer that: {exc}")
         else:
-            st.info("This live demo runs the curated questions above without an "
-                    "API key. To ask any free-form question, add an API key "
-                    "(sidebar) and the assistant will write the SQL for you.")
-elif "sel" in st.session_state:
-    it = BANK[st.session_state["sel"]]
-    answer(it["q"], it["sql"], it["chart"], it["summarize"], "demo")
-else:
-    st.info("👆 Tap a suggested question to see the assistant write SQL, chart "
-            "the answer, and explain it.")
+            m = find_bank(typed)
+            if m:
+                answer(m["q"], m["sql"], m["chart"], m["summarize"], "demo")
+            else:
+                st.info("This live demo runs the curated questions above without "
+                        "an API key. To ask any free-form question, add your key "
+                        "in the sidebar and the assistant will write the SQL.")
+    elif "sel" in st.session_state:
+        it = BANK[st.session_state["sel"]]
+        answer(it["q"], it["sql"], it["chart"], it["summarize"], "demo")
+    else:
+        st.info("👆 Tap a suggested question to see the assistant write SQL, "
+                "chart the answer, and explain it.")
+
+# ================= DATASET TAB =================
+with tab_data:
+    st.markdown(
+        "**A small synthetic e-commerce database** — four related tables. "
+        "Here's a live peek at each so you know what you can ask about. "
+        "(This is sample data; the design works on any SQL warehouse.)")
+    st.code(SCHEMA, language="text")
+    _tables = [("customers", "Customers"), ("products", "Products"),
+               ("orders", "Orders"), ("order_items", "Order items (line items)")]
+    for tbl, lbl in _tables:
+        n = int(run_sql(con, f"SELECT COUNT(*) AS n FROM {tbl}").iloc[0]["n"])
+        st.markdown(f"**{lbl}** — {n:,} rows  ·  showing first 8")
+        st.dataframe(run_sql(con, f"SELECT * FROM {tbl} LIMIT 8"),
+                     hide_index=True, use_container_width=True)
 
 # ---------------- sidebar ----------------
 with st.sidebar:

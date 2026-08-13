@@ -43,8 +43,9 @@ LAST = ["Smith", "Patel", "Nguyen", "Garcia", "Lee", "Brown", "Kim", "Lopez",
 def make_customers(n=2000) -> pd.DataFrame:
     states = RNG.choice(STATES, n, p=_state_probs())
     seg = RNG.choice(SEGMENTS, n, p=[0.62, 0.28, 0.10])
-    start = date(2023, 1, 1)
-    signup = [start + timedelta(days=int(RNG.integers(0, 660))) for _ in range(n)]
+    # sign-ups within the last ~2.5 years (relative to today)
+    signup = [date.today() - timedelta(days=int(RNG.integers(30, 900)))
+              for _ in range(n)]
     return pd.DataFrame({
         "customer_id": np.arange(1, n + 1),
         "customer_name": [f"{RNG.choice(FIRST)} {RNG.choice(LAST)}" for _ in range(n)],
@@ -78,11 +79,16 @@ def make_orders(customers, products, n_orders=12000):
     month_weights = month_weights / month_weights.sum()
     month_idx = RNG.choice(np.arange(24), size=n_orders, p=month_weights)
 
-    def month_to_date(m):
-        y = 2023 + (m // 12)
-        mo = (m % 12) + 1
-        day = int(RNG.integers(1, 28))
-        return date(y, mo, day)
+    import calendar
+    today = date.today()
+
+    def month_to_date(m):   # m: 0 = 23 months ago ... 23 = current month
+        total = today.year * 12 + (today.month - 1) - (23 - m)
+        y, mo = divmod(total, 12)
+        mo += 1
+        last_day = calendar.monthrange(y, mo)[1]
+        hi = today.day if (y == today.year and mo == today.month) else last_day
+        return date(y, mo, int(RNG.integers(1, max(2, min(hi, 28) + 1))))
 
     # returning customers over-represented (repeat purchase behavior)
     cust_weights = RNG.random(len(customers)) ** 2 + 0.05
