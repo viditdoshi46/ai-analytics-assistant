@@ -30,40 +30,55 @@ st.set_page_config(page_title="Ask-Your-Data | Vidit Doshi",
 # ---------------------------------------------------------------- styling ----
 st.markdown("""
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap');
+  html, body, [class*="css"], .stMarkdown {font-family:'Inter', sans-serif;}
+  code, pre {font-family:'Fira Code', monospace !important;}
+  .stApp {background: radial-gradient(800px 420px at 85% -8%, rgba(99,102,241,.28), transparent 60%),
+                      radial-gradient(640px 360px at -5% 12%, rgba(34,211,238,.13), transparent 60%), #0b1020;}
   /* generous top padding so nothing sits under Streamlit's fixed top toolbar */
   .block-container {max-width: 820px; padding-top: 4.5rem; padding-bottom: 6rem;}
+  @keyframes rise {from {opacity:0; transform:translateY(12px);} to {opacity:1; transform:none;}}
+  @keyframes glow {0%,100% {box-shadow:0 0 0 0 rgba(129,140,248,.0);} 50% {box-shadow:0 0 0 6px rgba(129,140,248,.14);}}
 
-  /* compact product-style header (no big banner — this is a chat app) */
-  .brand {display:flex; align-items:center; gap:12px; margin-bottom:2px;}
-  .brand img.logo {width:44px; height:44px; border-radius:12px; display:block;
-     flex:0 0 44px;}
-  .brand h1 {margin:0; font-size:1.4rem; font-weight:700; line-height:1.15;}
-  .brand .pill {font-size:.72rem; font-weight:600; padding:2px 9px; border-radius:999px;
+  .brand {display:flex; align-items:center; gap:14px; margin-bottom:2px; animation: rise .5s both;}
+  .brand img.logo {width:48px; height:48px; border-radius:14px; display:block; flex:0 0 48px;
+     box-shadow:0 10px 26px -8px rgba(99,102,241,.8);}
+  .brand h1 {margin:0; font-family:'Sora', sans-serif; font-size:1.65rem; font-weight:800; letter-spacing:-.03em; line-height:1.1;
+     background:linear-gradient(90deg,#fff,#a5b4fc 60%,#67e8f9); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .brand .pill {font-size:.72rem; font-weight:600; padding:4px 11px; border-radius:999px;
      margin-left:auto; white-space:nowrap;}
-  .pill-demo {background:#eef2ff; color:#4f46e5;}
-  .pill-live {background:#dcfce7; color:#15803d;}
-  .subtitle {color:#94a3b8; font-size:.98rem; margin:8px 0 2px 3px;}
+  .pill-demo {background:rgba(129,140,248,.16); color:#c7d2fe; border:1px solid rgba(129,140,248,.4); animation: glow 2.6s infinite;}
+  .pill-live {background:rgba(34,197,94,.15); color:#86efac; border:1px solid rgba(34,197,94,.4);}
+  .subtitle {color:#9aa4d0; font-size:1rem; margin:10px 0 6px 2px; line-height:1.55; animation: rise .6s both;}
 
-  /* the plain-English takeaway under each answer */
-  /* fixed light bg + fixed dark text so it's readable in BOTH themes */
-  .insight {background:#eef2ff; border-left:4px solid #6366f1; color:#1e1b4b;
-            padding:12px 15px; border-radius:8px; font-size:1.02rem; margin-top:6px;}
+  .insight {background:linear-gradient(135deg, rgba(99,102,241,.22), rgba(34,211,238,.10));
+            border:1px solid rgba(129,140,248,.35); border-left:4px solid #818cf8; color:#eef0ff;
+            padding:13px 16px; border-radius:12px; font-size:1.02rem; margin-top:8px; line-height:1.55;}
 
-  /* welcome mini-stats */
-  .stat {border:1px solid rgba(99,102,241,.28); border-radius:12px;
-         padding:12px 14px; text-align:center;}
-  .stat .n {font-size:1.35rem; font-weight:700; line-height:1.1;}
-  .stat .l {font-size:.78rem; color:#64748b; text-transform:uppercase;
-            letter-spacing:.03em; margin-top:2px;}
+  .stat {background:linear-gradient(160deg, #171e3d, #11172f); border:1px solid rgba(129,140,248,.25); border-radius:16px;
+         padding:16px 14px; text-align:center; animation: rise .6s both; transition: transform .25s, border-color .25s;}
+  .stat:hover {transform:translateY(-4px); border-color:rgba(129,140,248,.7);}
+  .stat .n {font-family:'Sora', sans-serif; font-size:1.55rem; font-weight:700; line-height:1.1;
+            background:linear-gradient(90deg,#c7d2fe,#67e8f9); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .stat .l {font-size:.74rem; color:#8c97c7; text-transform:uppercase; letter-spacing:.1em; margin-top:6px; font-weight:600;}
 
-  /* starter suggestion buttons: quieter, chip-like */
+  .lead {font-family:'Sora', sans-serif; font-weight:600; font-size:1.02rem; color:#dfe3ff; margin:18px 0 8px;}
+
+  /* starter suggestions: chip-like cards */
   div[data-testid="stButton"] > button {
-     text-align:left; border-radius:10px; font-weight:500;}
+     text-align:left; border-radius:12px; font-weight:500; background:#141a33;
+     border:1px solid rgba(129,140,248,.25); color:#dfe3ff; transition: all .2s;}
+  div[data-testid="stButton"] > button:hover {border-color:#818cf8; background:#1b2347; transform:translateY(-2px);
+     box-shadow:0 12px 24px -16px rgba(99,102,241,.9); color:#fff;}
+  div[data-testid="stFormSubmitButton"] > button {background:linear-gradient(90deg,#6366f1,#8b5cf6); border:0; color:#fff; font-weight:600;}
+  [data-testid="stChatMessage"] {background:rgba(20,26,51,.72); border:1px solid rgba(129,140,248,.16); border-radius:16px; animation: rise .45s both;}
+  [data-testid="stForm"] {background:#11172f; border:1px solid rgba(129,140,248,.3); border-radius:16px;}
+  section[data-testid="stSidebar"] {background:#0e1429; border-right:1px solid rgba(129,140,248,.18);}
 </style>
 """, unsafe_allow_html=True)
 
-HOVER = dict(bgcolor="white", bordercolor="#d6d9f5",
-             font=dict(color="#4338ca", size=13))
+HOVER = dict(bgcolor="#141a33", bordercolor="#818cf8",
+             font=dict(color="#e6e9ff", size=13))
 
 
 @st.cache_resource
@@ -154,7 +169,7 @@ st.markdown(f"""
   <h1>Ask-Your-Data</h1>
   {_pill}
 </div>
-<div class="subtitle">A natural-language analytics assistant — ask about the
+<div class="subtitle">A natural-language analytics assistant. Ask about the
 sales data in plain English and get SQL, a chart, and the takeaway.</div>
 """, unsafe_allow_html=True)
 
@@ -170,15 +185,19 @@ def pick_chart(df: pd.DataFrame, chart: str):
     y = ycands[0]
     if chart == "line":
         fig = px.line(df, x=x, y=y, markers=True,
-                      color_discrete_sequence=["#6366f1"])
+                      color_discrete_sequence=["#67e8f9"])
     else:
         d = df.sort_values(y)
         fig = px.bar(d, x=y, y=x, orientation="h")
         # solid indigo fill — a continuous scale fades to white on close
         # values and vanishes on a dark background
-        fig.update_traces(marker_color="#6366f1")
+        fig.update_traces(marker_color="#818cf8", marker_cornerradius=6)
     fig.update_layout(height=380, margin=dict(l=10, r=10, t=20, b=10),
-                      hoverlabel=HOVER)
+                      hoverlabel=HOVER, template="plotly_dark",
+                      paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                      font=dict(family="Inter, sans-serif", color="#c7cdf0"),
+                      xaxis=dict(gridcolor="rgba(129,140,248,.14)"),
+                      yaxis=dict(gridcolor="rgba(129,140,248,.14)"))
     return fig
 
 
@@ -293,9 +312,8 @@ if not st.session_state.history:
     s3.markdown(f'<div class="stat"><div class="n">{int(kpis["customers"]):,}</div>'
                 f'<div class="l">Customers</div></div>', unsafe_allow_html=True)
 
-    st.markdown("")
-    st.markdown(f"**Try one of {len(BANK)} example questions** — they run "
-                "instantly, no API key needed:")
+    st.markdown(f'<div class="lead">Try one of {len(BANK)} example questions. '
+                'They run instantly, no API key needed.</div>', unsafe_allow_html=True)
     starter_grid("start")
 
     with st.expander("🗂️ New here? Peek at the data first"):

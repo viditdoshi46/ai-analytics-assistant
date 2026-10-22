@@ -1,3 +1,15 @@
+<p align="center"><img src="assets/banner.svg" alt="Ask-Your-Data" width="100%"></p>
+
+<p align="center">
+  <a href="https://ai-analytics-assistant-viditdoshi46.streamlit.app"><img src="https://img.shields.io/badge/Live%20app-open-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Live app"></a>
+  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/SQL-analysis-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="SQL">
+</p>
+
+<p align="center"><b><a href="https://ai-analytics-assistant-viditdoshi46.streamlit.app">Live app</a></b> &nbsp;·&nbsp; <a href="#">Back to top</a></p>
+
+---
+
 # Ask-Your-Data — Natural-Language Analytics Assistant
 
 **The problem it solves:** analysts spend a big share of every week answering the same *"can you pull…?"* questions in SQL. It's a bottleneck for the business and low-leverage work for the analyst. This tool puts a **natural-language layer on top of the data** so a non-technical teammate can ask a question in plain English and get an answer — a chart plus a plain-English takeaway — without waiting in the analytics queue.
